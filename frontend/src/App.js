@@ -6,6 +6,8 @@ import FilterBar from "./components/FilterBar";
 import Analytics from "./components/Analytics";
 import SimpleAnalyticsTest from "./components/SimpleAnalyticsTest";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
 function App() {
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
@@ -28,7 +30,7 @@ function App() {
 
   const fetchExpenses = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/expenses");
+      const response = await axios.get(API_URL + "/api/expenses");
       setExpenses(response.data);
       setError(null);
     } catch (err) {
@@ -41,7 +43,7 @@ function App() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/categories");
+      const response = await axios.get(API_URL + "/api/categories");
       const categoryNames = response.data.map(cat => cat.name);
       setCategories(categoryNames);
     } catch (err) {
@@ -125,14 +127,14 @@ function App() {
       const removed = categories.filter(cat => !newCategories.includes(cat));
       
       for (const categoryName of added) {
-        await axios.post("http://localhost:8080/api/categories", { name: categoryName });
+        await axios.post(API_URL + "/api/categories", { name: categoryName });
       }
       
       for (const categoryName of removed) {
-        const response = await axios.get("http://localhost:8080/api/categories");
+        const response = await axios.get(API_URL + "/api/categories");
         const categoryToDelete = response.data.find(cat => cat.name === categoryName);
         if (categoryToDelete) {
-          await axios.delete(`http://localhost:8080/api/categories/${categoryToDelete.id}`);
+          await axios.delete(API_URL + `/api/categories/${categoryToDelete.id}`);
         }
       }
       

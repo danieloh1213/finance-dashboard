@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 function ExpenseForm({ onAdd, onUpdate, editingExpense, onCancelEdit, categories, onCategoriesChange }) {
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
   const [formData, setFormData] = useState({
     category: "",
     amount: "",
@@ -76,12 +77,12 @@ function ExpenseForm({ onAdd, onUpdate, editingExpense, onCancelEdit, categories
 
       if (editingExpense) {
         // Update existing expense
-        const response = await axios.put(`http://localhost:8080/api/expenses/${editingExpense.id}`, expenseData);
+        const response = await axios.put(API_URL + `/api/expenses/${editingExpense.id}`, expenseData);
         onUpdate(response.data);
         onCancelEdit();
       } else {
         // Add new expense
-        const response = await axios.post("http://localhost:8080/api/expenses", expenseData);
+        const response = await axios.post(API_URL + "/api/expenses", expenseData);
         onAdd(response.data);
       }
       

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 
 function ExpenseList({ expenses, onEdit, onDelete }) {
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
   const [expandedId, setExpandedId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -14,7 +15,7 @@ function ExpenseList({ expenses, onEdit, onDelete }) {
       setDeletingId(expense.id);
       
       try {
-        await axios.delete(`http://localhost:8080/api/expenses/${expense.id}`);
+        await axios.delete(API_URL + `/api/expenses/${expense.id}`);
         onDelete(expense.id);
       } catch (error) {
         console.error("Failed to delete expense:", error);
