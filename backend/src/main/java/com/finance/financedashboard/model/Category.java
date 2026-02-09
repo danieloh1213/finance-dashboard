@@ -11,6 +11,9 @@ public class Category {
     @Column(unique = true, nullable = false)
     private String name;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     public Category() {}
     public Category(String name) {
         this.name = name;
@@ -26,6 +29,14 @@ public class Category {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
 }

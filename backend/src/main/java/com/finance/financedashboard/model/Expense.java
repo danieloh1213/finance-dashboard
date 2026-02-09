@@ -10,6 +10,9 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     private String category;
     private BigDecimal amount;
     private LocalDate date;
@@ -21,6 +24,12 @@ public class Expense {
 
     public void setId(Long id) {
         this.id = id;
+    }
+    public Long getUserId() {
+        return userId;
+    }
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getCategory() {

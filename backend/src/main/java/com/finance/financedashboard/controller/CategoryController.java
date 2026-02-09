@@ -4,6 +4,8 @@ import com.finance.financedashboard.model.Category;
 import com.finance.financedashboard.repository.CategoryRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,66 +16,40 @@ import java.util.Optional;
 @RequestMapping("/api/categories")
 public class CategoryController {
 
-    private final CategoryRepository categoryRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     public CategoryController(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
     }
 
     @GetMapping
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<Category> getAllCategories(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return categoryRepository.findByUserId(userId);
     }
 
     @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
+    public ResponseEntity<Category> createCategory(@RequestBody Category category, Authentication authentication) {
         if (category.getName() == null || category.getName().trim().isEmpty()) {
             return ResponseEntity.<Category>badRequest().build();
         }
-
-        try { // duplicate name error catching
-            category.setName(category.getName().trim());
-            Category savedCategory = categoryRepository.save(category);
-            return ResponseEntity.ok(savedCategory);
-        } catch (Exception e) {
-            return ResponseEntity.<Category>status(HttpStatus.CONFLICT).build();
-        }
+        Long userId = (Long) authentication.getPrincipal();
+        category.setUserId(userId);
+        return ResponseEntity.ok(categoryRepository.save(category));
     }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
-        if (categoryDetails.getName() == null || categoryDetails.getName().trim().isEmpty()) {
-            return ResponseEntity.<Category>badRequest().build();
-        }
-
-        try { // duplicate name error catching
-            Optional<Category> optionalCategory = categoryRepository.findById(id);
-
-            if (optionalCategory.isPresent()) {
-                Category category = optionalCategory.get();
-                category.setName(categoryDetails.getName().trim());
-
-                Category updatedCategory = categoryRepository.save(category);
-                return ResponseEntity.ok(updatedCategory);
-            } else {
-                return ResponseEntity.<Category>notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.<Category>status(HttpStatus.CONFLICT).build();
-        }
-    }
+   
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        try {
-            if (categoryRepository.existsById(id)) {
-                categoryRepository.deleteById(id);
-                return ResponseEntity.<Void>noContent().build(); // 204 No Content
-            } else {
-                return ResponseEntity.<Void>notFound().build(); // 404 Not Found
-            }
-        } catch (Exception e) {
-            return ResponseEntity.<Void>status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        
+        return categoryRepository.findById(id)
+            .filter(category -> category.getUserId().equals(userId))
+            .map(category -> {
+                categoryRepository.delete(category);
+                return ResponseEntity.ok().<Void>build();
+            })
+            .orElse(ResponseEntity.notFound().build());
     }
 }

@@ -34,3 +34,7 @@ build/
 
 # keys
 *.pem
+
+.env
+.env.production
+.idea/

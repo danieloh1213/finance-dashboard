@@ -48,7 +48,6 @@ function App() {
       setCategories(categoryNames);
     } catch (err) {
       console.error("Failed to fetch categories", err);
-      setCategories(["Food", "Transportation", "Rent", "Utilities", "Entertainment", "Health", "Other"]);
     }
   };
 
