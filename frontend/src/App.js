@@ -5,25 +5,80 @@ import ExpenseForm from "./components/ExpenseForm";
 import FilterBar from "./components/FilterBar";
 import Analytics from "./components/Analytics";
 import SimpleAnalyticsTest from "./components/SimpleAnalyticsTest";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import { useAuth } from "./context/AuthContext";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
-function App() {
+function AuthPage() {
+  const [showRegister, setShowRegister] = useState(false);
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "20px",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif"
+      }}
+    >
+      <header
+        style={{
+          textAlign: "center",
+          marginBottom: "30px"
+        }}
+      >
+        <h1
+          style={{
+            color: "#111827",
+            fontSize: "32px",
+            margin: "0 0 10px 0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px"
+          }}
+        >
+          <img src={`${process.env.PUBLIC_URL}/favicon.ico`} alt="" style={{ width: 28, height: 28 }} />
+          Finance Dashboard
+        </h1>
+        <p
+          style={{
+            color: "#6b7280",
+            fontSize: "16px",
+            margin: 0
+          }}
+        >
+          Track your expenses and manage your budget
+        </p>
+      </header>
+      {showRegister ? (
+        <Register onSwitchToLogin={() => setShowRegister(false)} />
+      ) : (
+        <Login onSwitchToRegister={() => setShowRegister(true)} />
+      )}
+    </div>
+  );
+}
+
+function Dashboard() {
+  const { user, logout } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [editingExpense, setEditingExpense] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showCharts, setShowCharts] = useState(true); // Move chart toggle state here
+  const [showCharts, setShowCharts] = useState(true);
 
-  // Fetch expenses and categories on component mount
   useEffect(() => {
     fetchExpenses();
     fetchCategories();
   }, []);
 
-  // Update filtered expenses when expenses change
   useEffect(() => {
     setFilteredExpenses(expenses);
   }, [expenses]);
@@ -51,24 +106,18 @@ function App() {
     }
   };
 
-  // Filter expenses based on criteria
   const filterExpenses = (filters) => {
     let filtered = [...expenses];
 
-    // Filter by category
     if (filters.category) {
       filtered = filtered.filter(expense => expense.category === filters.category);
     }
-
-    // Filter by date range
     if (filters.dateFrom) {
       filtered = filtered.filter(expense => expense.date >= filters.dateFrom);
     }
     if (filters.dateTo) {
       filtered = filtered.filter(expense => expense.date <= filters.dateTo);
     }
-
-    // Filter by amount range
     if (filters.minAmount) {
       const minAmount = parseFloat(filters.minAmount);
       filtered = filtered.filter(expense => expense.amount >= minAmount);
@@ -77,11 +126,9 @@ function App() {
       const maxAmount = parseFloat(filters.maxAmount);
       filtered = filtered.filter(expense => expense.amount <= maxAmount);
     }
-
-    // Filter by search text in description
     if (filters.searchText) {
       const searchLower = filters.searchText.toLowerCase();
-      filtered = filtered.filter(expense => 
+      filtered = filtered.filter(expense =>
         expense.description && expense.description.toLowerCase().includes(searchLower)
       );
     }
@@ -98,8 +145,8 @@ function App() {
   };
 
   const handleUpdate = (updatedExpense) => {
-    setExpenses((prev) => 
-      prev.map(expense => 
+    setExpenses((prev) =>
+      prev.map(expense =>
         expense.id === updatedExpense.id ? updatedExpense : expense
       )
     );
@@ -120,15 +167,15 @@ function App() {
 
   const handleCategoriesChange = async (newCategories) => {
     const oldCategories = [...categories];
-    
+
     try {
       const added = newCategories.filter(cat => !categories.includes(cat));
       const removed = categories.filter(cat => !newCategories.includes(cat));
-      
+
       for (const categoryName of added) {
         await axios.post(API_URL + "/api/categories", { name: categoryName });
       }
-      
+
       for (const categoryName of removed) {
         const response = await axios.get(API_URL + "/api/categories");
         const categoryToDelete = response.data.find(cat => cat.name === categoryName);
@@ -136,13 +183,12 @@ function App() {
           await axios.delete(API_URL + `/api/categories/${categoryToDelete.id}`);
         }
       }
-      
+
       setCategories(newCategories);
-      
     } catch (error) {
       console.error("Failed to update categories:", error);
       setCategories(oldCategories);
-      
+
       if (error.response?.status === 409) {
         alert("Category already exists!");
       } else {
@@ -153,57 +199,93 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "200px",
-        fontSize: "18px",
-        color: "#6b7280"
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "200px",
+          fontSize: "18px",
+          color: "#6b7280"
+        }}
+      >
         Loading...
       </div>
     );
   }
 
   return (
-    <div style={{ 
-      maxWidth: "1800px", // Wider than before but not full screen
-      margin: "0 auto", // Center it
-      padding: "20px",
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif"
-    }}>
-      <header style={{ 
-        textAlign: "center", 
-        marginBottom: "30px",
-        borderBottom: "2px solid #e5e7eb",
-        paddingBottom: "20px"
-      }}>
-        <h1 style={{ 
-          color: "#111827", 
-          fontSize: "32px",
-          margin: "0 0 10px 0"
-        }}>
-          💰 Finance Dashboard
+    <div
+      style={{
+        maxWidth: "1800px",
+        margin: "0 auto",
+        padding: "20px",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif"
+      }}
+    >
+      <header
+        style={{
+          textAlign: "center",
+          marginBottom: "30px",
+          borderBottom: "2px solid #e5e7eb",
+          paddingBottom: "20px",
+          position: "relative"
+        }}
+      >
+        <button
+          onClick={logout}
+          style={{
+            position: "absolute",
+            right: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            backgroundColor: "#6b7280",
+            color: "white",
+            padding: "8px 16px",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "14px"
+          }}
+        >
+          Logout
+        </button>
+        <h1
+          style={{
+            color: "#111827",
+            fontSize: "32px",
+            margin: "0 0 10px 0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px"
+          }}
+        >
+          <img src={`${process.env.PUBLIC_URL}/favicon.ico`} alt="" style={{ width: 28, height: 28 }} />
+          Finance Dashboard
         </h1>
-        <p style={{ 
-          color: "#6b7280", 
-          fontSize: "16px",
-          margin: 0
-        }}>
-          Track your expenses and manage your budget
+        <p
+          style={{
+            color: "#6b7280",
+            fontSize: "16px",
+            margin: 0
+          }}
+        >
+          Track your expenses and manage your budget{user && ` · Hello, ${user.username}`}
         </p>
       </header>
 
       {error && (
-        <div style={{
-          backgroundColor: "#fee2e2",
-          color: "#dc2626",
-          padding: "12px",
-          borderRadius: "8px",
-          marginBottom: "20px",
-          textAlign: "center"
-        }}>
+        <div
+          style={{
+            backgroundColor: "#fee2e2",
+            color: "#dc2626",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "20px",
+            textAlign: "center"
+          }}
+        >
           {error}
           <button
             onClick={fetchExpenses}
@@ -223,20 +305,23 @@ function App() {
         </div>
       )}
 
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "1.2fr 0.8fr", // More balanced - left side less wide, right side wider
-        gap: "30px"
-      }}>
-        {/* LEFT SIDE - Expenses */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr 0.8fr",
+          gap: "30px"
+        }}
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <section style={{
-            backgroundColor: "#ffffff",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #e5e7eb"
-          }}>
+          <section
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "20px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              border: "1px solid #e5e7eb"
+            }}
+          >
             <ExpenseForm
               onAdd={handleAdd}
               onUpdate={handleUpdate}
@@ -247,18 +332,19 @@ function App() {
             />
           </section>
 
-          <section style={{
-            backgroundColor: "#ffffff",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #e5e7eb"
-          }}>
-            <FilterBar 
+          <section
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "20px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              border: "1px solid #e5e7eb"
+            }}
+          >
+            <FilterBar
               categories={categories}
               onFiltersChange={handleFiltersChange}
             />
-            
             <ExpenseList
               expenses={filteredExpenses}
               onEdit={handleEdit}
@@ -267,18 +353,19 @@ function App() {
           </section>
         </div>
 
-        {/* RIGHT SIDE - Analytics */}
         <div>
-          <section style={{
-            backgroundColor: "#ffffff",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            border: "1px solid #e5e7eb",
-            position: "sticky", // Makes analytics stick when scrolling
-            top: "20px"
-          }}>
-            <Analytics 
+          <section
+            style={{
+              backgroundColor: "#ffffff",
+              padding: "20px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              border: "1px solid #e5e7eb",
+              position: "sticky",
+              top: "20px"
+            }}
+          >
+            <Analytics
               expenses={filteredExpenses}
               showCharts={showCharts}
               setShowCharts={setShowCharts}
@@ -287,17 +374,42 @@ function App() {
         </div>
       </div>
 
-      <footer style={{
-        textAlign: "center",
-        marginTop: "40px",
-        padding: "20px",
-        color: "#9ca3af",
-        fontSize: "14px"
-      }}>
+      <footer
+        style={{
+          textAlign: "center",
+          marginTop: "40px",
+          padding: "20px",
+          color: "#9ca3af",
+          fontSize: "14px"
+        }}
+      >
         <p>💡 Tip: Use filters to find specific expenses quickly!</p>
       </footer>
     </div>
   );
+}
+
+function App() {
+  const { isAuthenticated, authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          fontSize: "18px",
+          color: "#6b7280"
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <Dashboard /> : <AuthPage />;
 }
 
 export default App;
